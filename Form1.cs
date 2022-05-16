@@ -157,31 +157,43 @@ namespace kursovaya_pasoib
         {
     
             DB = new SQLiteConnection("Data Source=pasoib_bd.db; Version=3");
-           
+
             using (DB)
             {
+                DB.Open(); //Открываем подключение
                 SQLiteCommand com = new SQLiteCommand("DELETE FROM programs WHERE Path=@path", DB);
-               string pathName = dataGridView1[0, dataGridView1.CurrentRow.Index].Value.ToString();
-          
 
-                com.Parameters.AddWithValue("@path", pathName);
-               DB.Open(); //Открываем подключение
                 try
                 {
-                    com.ExecuteNonQuery();
-                    RegistryWork a = new RegistryWork();
+                    if (dataGridView1.Rows.Count == 1)
+                        MessageBox.Show("База данных пуста! Удалять нечего!");
+
+                    else
+                    {
+                        string pathName = dataGridView1[0, dataGridView1.CurrentRow.Index].Value.ToString();
+
+
+                        com.Parameters.AddWithValue("@path", pathName);
+                        com.ExecuteNonQuery();
+                        RegistryWork a = new RegistryWork();
                         a.DeleteValue(Path.GetFileName(pathName));
-                    MessageBox.Show("Приложение удалено из списка! Перезагрузите компьютер");
+                        MessageBox.Show("Приложение удалено из списка! Перезагрузите компьютер");
+                        dataGridView1.Rows.Remove(dataGridView1.CurrentRow);
+                    }
                 }
+
                 catch
                 {
                     MessageBox.Show("Удалить не удалось!");
                 }
             }
+       }
+            
+            
 
-            dataGridView1.Rows.Remove(dataGridView1.CurrentRow);
+            
  
-        }
+        
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
