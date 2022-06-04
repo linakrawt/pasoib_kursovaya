@@ -33,7 +33,6 @@ D:\projects\kursovaya_pasoib\bin\Debug\net5.0-windows\runtimes\linux-x64\native\
 D:\projects\kursovaya_pasoib\bin\Debug\net5.0-windows\runtimes\osx-x64\native\SQLite.Interop.dll
 D:\projects\kursovaya_pasoib\bin\Debug\net5.0-windows\runtimes\win-x64\native\SQLite.Interop.dll
 D:\projects\kursovaya_pasoib\bin\Debug\net5.0-windows\runtimes\win-x86\native\SQLite.Interop.dll
-D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.csproj.AssemblyReference.cache
 D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.Form1.resources
 D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.csproj.GenerateResource.cache
 D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.GeneratedMSBuildEditorConfig.editorconfig
@@ -45,3 +44,7 @@ D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.dll
 D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\ref\kursovaya_pasoib.dll
 D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.pdb
 D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.genruntimeconfig.cache
+D:\projects\kursovaya_pasoib\bin\Debug\net5.0-windows\System.CodeDom.dll
+D:\projects\kursovaya_pasoib\bin\Debug\net5.0-windows\System.Management.dll
+D:\projects\kursovaya_pasoib\bin\Debug\net5.0-windows\runtimes\win\lib\netcoreapp3.1\System.Management.dll
+D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.csproj.AssemblyReference.cache

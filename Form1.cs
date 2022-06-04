@@ -11,6 +11,8 @@ using System.Data.SQLite;
 using System.IO;
 using Microsoft.Win32;
 using System.Security.AccessControl;
+using System.Management;
+using System.Diagnostics;
 
 namespace kursovaya_pasoib
 {
@@ -24,23 +26,43 @@ namespace kursovaya_pasoib
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            
-            DB = new SQLiteConnection("Data Source=pasoib_bd.db; Version=3");
-            SQLiteCommand command = Form1.DB.CreateCommand();
 
 
 
-            string CommandText = "SELECT * FROM programs";
-            SQLiteDataAdapter sqlda = new SQLiteDataAdapter(CommandText, DB);
-            DataTable dt = new DataTable();
 
-            using (dt = new DataTable())
+            string[] mas = { };
+
+            try
             {
-                sqlda.Fill(dt);
-                dataGridView1.DataSource = dt;
-                dataGridView1.Columns[0].Width = 505;
+                ManagementObjectSearcher usersSearcher = new ManagementObjectSearcher(@"SELECT * FROM Win32_UserAccount");
+                ManagementObjectCollection users = usersSearcher.Get();
+
+                var localUsers = users.Cast<ManagementObject>().Where(
+                    u => (bool)u["LocalAccount"] == true &&
+                         (bool)u["Disabled"] == false &&
+                         (bool)u["Lockout"] == false &&
+                         int.Parse(u["SIDType"].ToString()) == 1 &&
+                         u["Name"].ToString() != "HomeGroupUser$");
+
+
+
+                foreach (ManagementObject user in localUsers)
+                {
+
+                    Array.Resize(ref mas, mas.Length + 1);
+                    mas[mas.Length - 1] = user["Name"].ToString();
+
+
+                }
             }
-            DB.Close();
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred while querying for WMI data: " + ex.Message);
+            }
+
+
+            comboBox1.Items.AddRange(mas);
+
 
         }
         string filePath;
@@ -50,7 +72,7 @@ namespace kursovaya_pasoib
             try
             {
                 var fileContent = string.Empty;
-               // var filePath = string.Empty;
+                // var filePath = string.Empty;
 
                 using (OpenFileDialog openFileDialog = new OpenFileDialog())
                 {
@@ -74,72 +96,103 @@ namespace kursovaya_pasoib
                         }
                     }
                 }
-               // textBox1.Text = filePath;
+                // textBox1.Text = filePath;
                 string fileName = Path.GetFileName(filePath);
                 textBox1.Text = fileName;
-               
 
-                //if (Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer") != null) //если путь существует
-                //{
-                //    MessageBox.Show("Путь Существует!");
-                //}
-                //else
-                //{
-                //   // string nameSubKey = "Friends";
-                //    string nameFriend = "Explorer";
-                //         using (RegistryKey regKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
-                //        // if (regKey != null)  {
-                //          regKey.CreateSubKey(nameFriend);
-                //        //   }
-                //        MessageBox.Show("Раздел создан 1");
-                //    using (RegistryKey regKey2 = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
-
-                //    regKey2.SetValue("DisallowRun", "1", RegistryValueKind.DWord);
-                //    using (RegistryKey regKey3 = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
-
-                //        regKey3.CreateSubKey("DisallowRun");
-                //    MessageBox.Show("Раздел создан 2");
-
-                //    using (RegistryKey regKey4 = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\DisallowRun", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
-                //        regKey4.SetValue("1", fileName);
-
-                //    MessageBox.Show("Параметр добавлен");
-
-                //}
-
-                //RegistryWork a = new RegistryWork();
-                //a.CreateKey();
-                //a.CreateValue(fileName, fileName);
 
             }
-           
-            catch  (Exception ex)
+
+            catch (Exception ex)
             {
                 //  MessageBox.Show("Ошибка!");
                 MessageBox.Show($"Ошибка! {ex.Message}");
             }
         }
 
-   
+
 
         private void button2_Click(object sender, EventArgs e)
         {
-            if (textBox1.Text != "")
+            if (textBox1.Text != "" && comboBox1.SelectedIndex > -1)
             {
+                string[] sessionDetails = new string[3];
+                string current = "";
+                ProcessStartInfo startInfo = new ProcessStartInfo("cmd", "/c QUERY SESSION " + comboBox1.Text)
+                {
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                };
+
+                Process getsess = Process.Start(startInfo);
+
+                getsess.OutputDataReceived += (x, y) => current += y.Data;
+                getsess.BeginOutputReadLine();
+                getsess.WaitForExit();
+
+                int a = Process.GetCurrentProcess().SessionId;
+
+
+
+                if (current.Length != 0)
+                {
+                    if (a.ToString() != current.Substring(119, 4).Replace(" ", ""))
+                    {
+
+                        sessionDetails[0] = current.Substring(119, 4);
+
+                        Process logoff = new Process();
+                        ProcessStartInfo startInfo2 = new ProcessStartInfo();
+                        startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                        startInfo.FileName = "cmd.exe";
+                        startInfo.Arguments = "/C LOGOFF " + sessionDetails[0];
+                        logoff.StartInfo = startInfo;
+                        logoff.Start();
+                    }
+                }
+                if (Environment.UserName != comboBox1.Text)
+                { RegistryWork b = new RegistryWork();
+                    b.LoadKey(comboBox1.Text);
+                };
+
+
 
                 DB = new SQLiteConnection("Data Source=pasoib_bd.db; Version=3");
                 try
                 {
                     DB.Open();
                     BD authorization = new BD();
-                    bool check = authorization.Check(filePath);
-                    if (check == false)
+                    bool check1 = authorization.userCheck(comboBox1.Text);
+                    if (check1 == false)
                     {
-                        RegistryWork a = new RegistryWork();
-                        a.CreateKey();
-                        a.CreateValue(textBox1.Text, textBox1.Text);
-                        BD writePath = new BD();
-                        bool check2 = writePath.WritePath(filePath);
+
+                        BD userWrite = new BD();
+                        bool check2 = authorization.userWrite(comboBox1.Text);
+                    }
+
+
+
+                    bool check3 = authorization.Check(filePath, comboBox1.Text);
+                    if (check3 == false)
+                    {
+                        if (Environment.UserName != comboBox1.Text)
+                        {
+                            RegistryWork c = new RegistryWork();
+                            c.CreateUserKey(comboBox1.Text);
+                            c.CreateUserValue(textBox1.Text, textBox1.Text, comboBox1.Text);
+                            BD writePath = new BD();
+                            bool check4 = writePath.WritePath(filePath, comboBox1.Text);
+                        }
+                        else
+                        {
+                            RegistryWork c = new RegistryWork();
+                            c.CreateKey();
+                            c.CreateValue(textBox1.Text, textBox1.Text);
+                            BD writePath = new BD();
+                            bool check4 = writePath.WritePath(filePath, comboBox1.Text);
+                        }
                     }
                     else MessageBox.Show("Данная программа уже в списке!");
 
@@ -150,9 +203,9 @@ namespace kursovaya_pasoib
 
                 }
             }
-            else MessageBox.Show("Вы ничего не выбрали!");
+            else MessageBox.Show("Вы не выбрали пользователя или не указали путь!");
         }
-
+    
         private void button3_Click(object sender, EventArgs e)
         {
     
@@ -175,16 +228,73 @@ namespace kursovaya_pasoib
 
                         com.Parameters.AddWithValue("@path", pathName);
                         com.ExecuteNonQuery();
-                        RegistryWork a = new RegistryWork();
-                        a.DeleteValue(Path.GetFileName(pathName));
+
+                        if (Environment.UserName != comboBox1.Text)
+                        {
+                            string[] sessionDetails = new string[3];
+                            string current = "";
+                            ProcessStartInfo startInfo = new ProcessStartInfo("cmd", "/c QUERY SESSION " + comboBox1.Text)
+                            {
+                                WindowStyle = ProcessWindowStyle.Hidden,
+                                UseShellExecute = false,
+                                RedirectStandardOutput = true,
+                                CreateNoWindow = true
+                            };
+
+                            Process getsess = Process.Start(startInfo);
+
+                            getsess.OutputDataReceived += (x, y) => current += y.Data;
+                            getsess.BeginOutputReadLine();
+                            getsess.WaitForExit();
+
+
+                            if (Environment.UserName != comboBox1.Text)
+                            {
+                                RegistryWork b = new RegistryWork();
+                                b.LoadKey(comboBox1.Text);
+                            };
+
+                            int a = Process.GetCurrentProcess().SessionId;
+
+                            if (current.Length != 0)
+                            {
+                                if (a.ToString() != current.Substring(119, 4).Replace(" ", ""))
+                                {
+
+                                    sessionDetails[0] = current.Substring(119, 4);
+                                
+
+                                    Process logoff = new Process();
+                                    ProcessStartInfo startInfo2 = new ProcessStartInfo();
+                                    startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                                    startInfo.FileName = "cmd.exe";
+                                    startInfo.Arguments = "/C LOGOFF " + sessionDetails[0];
+                                    logoff.StartInfo = startInfo;
+                                    logoff.Start();
+                                }
+                            }
+
+                            RegistryWork c = new RegistryWork();
+                            c.CreateUserKey(comboBox1.Text);
+                            
+                            c.DeleteUserValue(Path.GetFileName(pathName), comboBox1.Text);
+                        }
+                        else
+                        {
+                            RegistryWork a = new RegistryWork();
+                            a.DeleteValue(Path.GetFileName(pathName));
+                        }
+
+
+
                         MessageBox.Show("Приложение удалено из списка! Перезагрузите компьютер");
                         dataGridView1.Rows.Remove(dataGridView1.CurrentRow);
                     }
                 }
 
-                catch
+                catch (Exception ex)
                 {
-                    MessageBox.Show("Удалить не удалось!");
+                    MessageBox.Show("Удалить не удалось!"+ ex.Message);
                 }
             }
        }
@@ -202,21 +312,27 @@ namespace kursovaya_pasoib
 
         private void button4_Click(object sender, EventArgs e)
         {
+
             DB = new SQLiteConnection("Data Source=pasoib_bd.db; Version=3");
-            SQLiteCommand command = Form1.DB.CreateCommand();
+            SQLiteCommand command = DB.CreateCommand();
+
+            string userName = comboBox1.Text;
 
 
 
-            string CommandText = "SELECT * FROM programs";
-            SQLiteDataAdapter sqlda = new SQLiteDataAdapter(CommandText, DB);
+            SQLiteCommand command2 = DB.CreateCommand();
+            command2.Parameters.Add("@userName", DbType.String).Value = userName;
+            command2.CommandText = "SELECT Path FROM programs where name_User like @userName";
+
+            SQLiteDataAdapter sqlda = new SQLiteDataAdapter();
+            sqlda.SelectCommand = command2;
             DataTable dt = new DataTable();
 
             using (dt = new DataTable())
             {
-
-
                 sqlda.Fill(dt);
                 dataGridView1.DataSource = dt;
+                dataGridView1.Columns[0].Width = 505;
             }
             DB.Close();
         }
@@ -224,6 +340,42 @@ namespace kursovaya_pasoib
         private void groupBox1_Enter(object sender, EventArgs e)
         {
 
+
+
         }
+
+    
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+            DB = new SQLiteConnection("Data Source=pasoib_bd.db; Version=3");
+            SQLiteCommand command = DB.CreateCommand();
+
+            string userName = comboBox1.Text;
+
+
+
+            SQLiteCommand command2 = DB.CreateCommand();
+            command2.Parameters.Add("@userName", DbType.String).Value = userName;
+            command2.CommandText= "SELECT Path FROM programs where name_User like @userName";
+
+
+            SQLiteDataAdapter sqlda = new SQLiteDataAdapter();
+            sqlda.SelectCommand = command2;
+            DataTable dt = new DataTable();
+            
+            using (dt = new DataTable())
+            {
+                sqlda.Fill(dt);
+                dataGridView1.DataSource = dt;
+                dataGridView1.Columns[0].Width = 505;
+            }
+            DB.Close();
+
+        }
+
+      
     }
-}
+    }
+

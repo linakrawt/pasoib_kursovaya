@@ -12,6 +12,7 @@
     <PackageReference Include="SQLite" Version="3.13.0" />
     <PackageReference Include="Stub.System.Data.SQLite.Core.NetFramework" Version="1.0.115.5" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" />
+    <PackageReference Include="System.Management" Version="6.0.0" />
   </ItemGroup>
 
 </Project>
