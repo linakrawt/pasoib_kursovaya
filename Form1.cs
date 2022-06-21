@@ -13,11 +13,52 @@ using Microsoft.Win32;
 using System.Security.AccessControl;
 using System.Management;
 using System.Diagnostics;
+using System.Threading;
 
 namespace kursovaya_pasoib
 {
     public partial class Form1 : Form
     {
+
+        void userSH()
+        {
+            string[] sessionDetails = new string[3];
+            string current = "";
+            ProcessStartInfo startInfo = new ProcessStartInfo("cmd", "/c QUERY SESSION " + comboBox1.Text)
+            {
+                WindowStyle = ProcessWindowStyle.Hidden,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            };
+
+            Process getsess = Process.Start(startInfo);
+
+            getsess.OutputDataReceived += (x, y) => current += y.Data;
+            getsess.BeginOutputReadLine();
+            getsess.WaitForExit();
+
+            int a = Process.GetCurrentProcess().SessionId;
+
+            if (current.Length != 0)
+            {
+                if (a.ToString() != current.Substring(119, 4).Replace(" ", ""))
+                {
+
+                    sessionDetails[0] = current.Substring(119, 4);
+
+                    Process logoff = new Process();
+                    ProcessStartInfo startInfo2 = new ProcessStartInfo();
+                    startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    startInfo.FileName = "cmd.exe";
+                    startInfo.Arguments = "/C LOGOFF " + sessionDetails[0];
+                    logoff.StartInfo = startInfo;
+                    logoff.Start();
+                }
+            }
+        }
+
+
         public static SQLiteConnection DB;
         public Form1()
         {
@@ -116,48 +157,16 @@ namespace kursovaya_pasoib
         {
             if (textBox1.Text != "" && comboBox1.SelectedIndex > -1)
             {
-                string[] sessionDetails = new string[3];
-                string current = "";
-                ProcessStartInfo startInfo = new ProcessStartInfo("cmd", "/c QUERY SESSION " + comboBox1.Text)
-                {
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                };
-
-                Process getsess = Process.Start(startInfo);
-
-                getsess.OutputDataReceived += (x, y) => current += y.Data;
-                getsess.BeginOutputReadLine();
-                getsess.WaitForExit();
-
-                int a = Process.GetCurrentProcess().SessionId;
 
 
-
-                if (current.Length != 0)
-                {
-                    if (a.ToString() != current.Substring(119, 4).Replace(" ", ""))
-                    {
-
-                        sessionDetails[0] = current.Substring(119, 4);
-
-                        Process logoff = new Process();
-                        ProcessStartInfo startInfo2 = new ProcessStartInfo();
-                        startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                        startInfo.FileName = "cmd.exe";
-                        startInfo.Arguments = "/C LOGOFF " + sessionDetails[0];
-                        logoff.StartInfo = startInfo;
-                        logoff.Start();
-                    }
-                }
+                userSH(); Thread.Sleep(3000);
                 if (Environment.UserName != comboBox1.Text)
-                { RegistryWork b = new RegistryWork();
-                    b.LoadKey(comboBox1.Text);
+                {
+                    RegistryWork b = new RegistryWork();
+                    b.LoadKey(comboBox1.Text); b.LoadKey(comboBox1.Text);
                 };
 
-
+                
 
                 DB = new SQLiteConnection("Data Source=pasoib_bd.db; Version=3");
                 try
@@ -227,68 +236,40 @@ namespace kursovaya_pasoib
 
 
                         com.Parameters.AddWithValue("@path", pathName);
-                        com.ExecuteNonQuery();
+                        
 
                         if (Environment.UserName != comboBox1.Text)
                         {
-                            string[] sessionDetails = new string[3];
-                            string current = "";
-                            ProcessStartInfo startInfo = new ProcessStartInfo("cmd", "/c QUERY SESSION " + comboBox1.Text)
-                            {
-                                WindowStyle = ProcessWindowStyle.Hidden,
-                                UseShellExecute = false,
-                                RedirectStandardOutput = true,
-                                CreateNoWindow = true
-                            };
-
-                            Process getsess = Process.Start(startInfo);
-
-                            getsess.OutputDataReceived += (x, y) => current += y.Data;
-                            getsess.BeginOutputReadLine();
-                            getsess.WaitForExit();
+                            userSH(); Thread.Sleep(3000);
 
 
                             if (Environment.UserName != comboBox1.Text)
                             {
                                 RegistryWork b = new RegistryWork();
-                                b.LoadKey(comboBox1.Text);
+                                b.LoadKey(comboBox1.Text); b.LoadKey(comboBox1.Text);
                             };
 
-                            int a = Process.GetCurrentProcess().SessionId;
-
-                            if (current.Length != 0)
-                            {
-                                if (a.ToString() != current.Substring(119, 4).Replace(" ", ""))
-                                {
-
-                                    sessionDetails[0] = current.Substring(119, 4);
-                                
-
-                                    Process logoff = new Process();
-                                    ProcessStartInfo startInfo2 = new ProcessStartInfo();
-                                    startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                                    startInfo.FileName = "cmd.exe";
-                                    startInfo.Arguments = "/C LOGOFF " + sessionDetails[0];
-                                    logoff.StartInfo = startInfo;
-                                    logoff.Start();
-                                }
-                            }
-
+                            Thread.Sleep(2000);
                             RegistryWork c = new RegistryWork();
                             c.CreateUserKey(comboBox1.Text);
                             
                             c.DeleteUserValue(Path.GetFileName(pathName), comboBox1.Text);
+                            com.ExecuteNonQuery();
+                            MessageBox.Show("Приложение удалено из списка! Перезагрузите компьютер");
+                            dataGridView1.Rows.Remove(dataGridView1.CurrentRow);
                         }
                         else
                         {
                             RegistryWork a = new RegistryWork();
                             a.DeleteValue(Path.GetFileName(pathName));
+                            com.ExecuteNonQuery();
+                            MessageBox.Show("Приложение удалено из списка! Перезагрузите компьютер");
+                            dataGridView1.Rows.Remove(dataGridView1.CurrentRow);
                         }
 
 
 
-                        MessageBox.Show("Приложение удалено из списка! Перезагрузите компьютер");
-                        dataGridView1.Rows.Remove(dataGridView1.CurrentRow);
+
                     }
                 }
 

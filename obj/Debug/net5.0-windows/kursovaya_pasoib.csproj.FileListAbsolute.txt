@@ -47,4 +47,4 @@ D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.genruntim
 D:\projects\kursovaya_pasoib\bin\Debug\net5.0-windows\System.CodeDom.dll
 D:\projects\kursovaya_pasoib\bin\Debug\net5.0-windows\System.Management.dll
 D:\projects\kursovaya_pasoib\bin\Debug\net5.0-windows\runtimes\win\lib\netcoreapp3.1\System.Management.dll
-D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.csproj.AssemblyReference.cache
+D:\projects\kursovaya_pasoib\obj\Debug\net5.0-windows\kursovaya_pasoib.csprojAssemblyReference.cache

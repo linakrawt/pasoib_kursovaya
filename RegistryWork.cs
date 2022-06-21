@@ -51,12 +51,15 @@ namespace kursovaya_pasoib
 
         public void CreateUserKey(string userName)
         {
-            if (Registry.Users.OpenSubKey(userName + @"\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer") != null)
+            if (Registry.Users.OpenSubKey(userName + @"\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\DisallowRun") != null)
             { return; }
             else
             {
 
+               
+
                 string nameKey = "Explorer";
+                string a = userName + @"\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies";
                 using (RegistryKey regKey = Registry.Users.OpenSubKey(userName + @"\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
 
                     regKey.CreateSubKey(nameKey);
@@ -122,19 +125,7 @@ namespace kursovaya_pasoib
 
         public void CreateValue(string fileName, string Name)
         {
-            //long intName;
-
-            //using (RegistryKey regKey4 = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\DisallowRun", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
-            //{
-            //    string stringName = String.Join("", regKey4.GetValueNames());
-            //    MessageBox.Show(stringName);
-
-            //    intName = Int64.Parse(stringName);
-             
-            //};
-
-   //MessageBox.Show(intName.ToString());     
-   //         ++intName;
+            string a = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\DisallowRun";
             using (RegistryKey regKey5 = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer\DisallowRun", RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl))
             {
            
